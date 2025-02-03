@@ -27,10 +27,12 @@ def is_armstrong(n):
 
 
 def get_fun_fact(n):
-    """ Reurns a fun fact from Numbers API """
+    """ Returns a fun fact from Numbers API """
     try:
         response = requests.get(f"http://numbersapi.com/{n}/math")
-        return response.text if response.status_code == 200 else "No fact available."
+        if response.status_code == 200:
+            return f"{n} is an Armstrong number because {' + '.join(f'{d}^{len(str(n))}' for d in str(n))} = {n}"
+        return "No fact available."
     except requests.RequestException:
         return "Could not retrieve a fact."
 
