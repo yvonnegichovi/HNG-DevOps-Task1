@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
+from collections import OrderedDict
 from flask_cors import CORS
+import json
 import requests
 
 app = Flask(__name__)
@@ -52,16 +54,21 @@ def classify_number():
     if is_armstrong(number):
         properties.insert(0, "armstrong")
     
-    response_data = {
-        "number": number,
-        "is_prime": is_prime(number),
-        "is_perfect": is_perfect(number),
-        "properties": properties,
-        "digit_sum": digit_sum,
-        "fun_fact": get_fun_fact(number)
-    }
+    response_data = OrderedDict([
+        ("number", number),
+        ("is_prime", is_prime(number)),
+        ("is_perfect", is_perfect(number)),
+        ("properties", properties),
+        ("digit_sum", f"{digit_sum},  // sum of its digits"),
+        ("fun_fact", get_fun_fact(number))
+        ])
+
+    return app.response_class(
+        response=json.dumps(response_data, indent=4),  # Indentation for readability
+        status=200,
+        mimetype='application/json'
+    )
     
-    return jsonify(response_data)
 
 if __name__ == '__main__':
     app.run(debug=True,host="0.0.0.0", port=5000)
