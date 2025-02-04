@@ -31,7 +31,7 @@ def get_fun_fact(n):
     try:
         response = requests.get(f"http://numbersapi.com/{n}/math")
         if response.status_code == 200:
-            return f"{n} is an Armstrong number because {' + '.join(f'{d}^{len(str(n))}' for d in str(n))} = {n}"
+            return f"{n} is an Armstrong number because {' + '.join(f'{d}^{len(str(n))}' for d in str(n))} = {n} //gotten from the numbers API"
         return "No fact available."
     except requests.RequestException:
         return "Could not retrieve a fact."
