@@ -43,39 +43,45 @@ def digit_sum(n):
 def classify_number():
     num_str = request.args.get('number')
 
-    if not num_str or not num_str.isdigit():
+    if not num_str:
         return jsonify({"number": "alphabet", "error": True}), 400
 
-    number = int(num_str)
+    try:
+        number = float(num_str)  # Allow floating-point numbers
+    except ValueError:
+        return jsonify({"number": "alphabet", "error": True}), 400
 
-    prime = is_prime(number)
-    perfect = is_perfect(number)
-    armstrong = is_armstrong(number)
-    d_sum = digit_sum(number)
-    parity = "odd" if number % 2 != 0 else "even"
+    # Check if the number is an integer
+    is_integer = number.is_integer()
+    properties = []
 
-    properties = ["armstrong", parity] if armstrong else [parity]
+    if is_integer:
+        int_number = int(number)
+        if is_armstrong(int_number):
+            properties.append("armstrong")
+        properties.append("odd" if int_number % 2 != 0 else "even")
 
+    # Get a fun fact (Numbers API works for all numbers)
     try:
         response = requests.get(f"http://numbersapi.com/{number}/math?json", timeout=5)
         fun_fact = response.json().get("text", "No fun fact available.") if response.status_code == 200 else "No fun fact available."
     except Exception:
         fun_fact = "No fun fact available."
 
-    if armstrong and "armstrong" not in fun_fact.lower():
-        fun_fact = f"{number} is an Armstrong number because " + " + ".join(f"{d}^{len(str(number))}" for d in str(number)) + f" = {number}"
+    # Custom Armstrong message
+    if is_integer and is_armstrong(int_number) and "armstrong" not in fun_fact.lower():
+        fun_fact = f"{int_number} is an Armstrong number because " + " + ".join(f"{d}^{len(str(int_number))}" for d in str(abs(int_number))) + f" = {int_number}"
 
     result = {
-        "number": number,
-        "is_prime": prime,
-        "is_perfect": perfect,
+        "number": number if "." in num_str else int(number),  # Keep floats as floats, integers as integers
+        "is_prime": is_prime(number),
+        "is_perfect": is_perfect(number),
         "properties": properties,
-        "digit_sum": d_sum,
+        "digit_sum": digit_sum(number) if is_integer else None,  # Only for integers
         "fun_fact": fun_fact
     }
 
     return jsonify(result), 200
-
 
 if __name__ == '__main__':
     app.run(debug=True)
