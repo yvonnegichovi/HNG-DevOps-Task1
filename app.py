@@ -41,47 +41,34 @@ def digit_sum(n):
 
 @app.route('/api/classify-number', methods=['GET'])
 def classify_number():
-    num_str = request.args.get('number')
+    """ An API that runs the numbers and returns the fun fact"""
+    number = request.args.get('number')
 
-    if not num_str:
+    if not number or not number.isdigit():
         return jsonify({"number": "alphabet", "error": True}), 400
 
-    try:
-        number = float(num_str)  # Allow floating-point numbers
-    except ValueError:
-        return jsonify({"number": "alphabet", "error": True}), 400
+    number = int(number)
+    digit_sum = sum(int(d) for d in str(number))
+    properties = ["even" if number % 2 == 0 else "odd"]
 
-    # Check if the number is an integer
-    is_integer = number.is_integer()
-    properties = []
+    if is_armstrong(number):
+        properties.insert(0, "armstrong")
 
-    if is_integer:
-        int_number = int(number)
-        if is_armstrong(int_number):
-            properties.append("armstrong")
-        properties.append("odd" if int_number % 2 != 0 else "even")
+    response_data = OrderedDict([
+        ("number", number),
+        ("is_prime", is_prime(number)),
+        ("is_perfect", is_perfect(number)),
+        ("properties", properties),
+        ("digit_sum", f"{digit_sum},  // sum of its digits"),
+        ("fun_fact", get_fun_fact(number))
+        ])
 
-    # Get a fun fact (Numbers API works for all numbers)
-    try:
-        response = requests.get(f"http://numbersapi.com/{number}/math?json", timeout=5)
-        fun_fact = response.json().get("text", "No fun fact available.") if response.status_code == 200 else "No fun fact available."
-    except Exception:
-        fun_fact = "No fun fact available."
+    return app.response_class(
+        response=json.dumps(response_data, indent=4),  # Indentation for readability
+        status=200,
+        mimetype='application/json'
+    )
 
-    # Custom Armstrong message
-    if is_integer and is_armstrong(int_number) and "armstrong" not in fun_fact.lower():
-        fun_fact = f"{int_number} is an Armstrong number because " + " + ".join(f"{d}^{len(str(int_number))}" for d in str(abs(int_number))) + f" = {int_number}"
-
-    result = {
-        "number": number if "." in num_str else int(number),  # Keep floats as floats, integers as integers
-        "is_prime": is_prime(number),
-        "is_perfect": is_perfect(number),
-        "properties": properties,
-        "digit_sum": digit_sum(number) if is_integer else None,  # Only for integers
-        "fun_fact": fun_fact
-    }
-
-    return jsonify(result), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
