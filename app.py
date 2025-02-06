@@ -32,27 +32,35 @@ def is_perfect(n):
     return total == n
 
 def is_armstrong(n):
+    # Armstrong numbers are defined only for non-negative integers.
+    if n < 0:
+        return False
     digits = str(n)
     power = len(digits)
     return sum(int(d)**power for d in digits) == n
 
 def digit_sum(n):
-    return sum(int(d) for d in str(n))
+    # Use the absolute value so that the '-' sign doesn't interfere.
+    return sum(int(d) for d in str(abs(n)))
 
 @app.route('/api/classify-number', methods=['GET'])
 def classify_number():
     num_str = request.args.get('number')
     if num_str is None:
         # If no number parameter is provided, return a 400 with an error message.
-        return jsonify({"error": True, "number": "alphabet"}), 400
+        return jsonify({"error": True, "number": ""}), 400
 
     try:
-        number = int(num_str)
+        # Parse as float to accept both integer and floating-point inputs.
+        value = float(num_str)
     except ValueError:
-        # Return the error JSON if the input is not a valid integer.
-        return jsonify({"number": "alphabet", "error": True}), 400
+        # Return the error JSON if the input is not a valid number.
+        return jsonify({"number": num_str, "error": True}), 400
 
-    # Compute properties
+    # Convert the float to an integer by rounding to the nearest integer.
+    number = int(round(value))
+
+    # Compute properties based on the integer value.
     prime = is_prime(number)
     perfect = is_perfect(number)
     armstrong = is_armstrong(number)
@@ -80,13 +88,11 @@ def classify_number():
     # For Armstrong numbers, if the fun fact does not mention "Armstrong",
     # override with a custom fact matching the sample format.
     if armstrong:
-        custom_fact = f"{number} is an Armstrong number because " + " + ".join(f"{d}^{len(str(number))}" for d in str(number)) + f" = {number}"
-        if ("armstrong" not in fun_fact.lower()):
+        custom_fact = f"{number} is an Armstrong number because " + " + ".join(f"{d}^{len(str(abs(number)))}" for d in str(abs(number))) + f" = {number}"
+        if "armstrong" not in fun_fact.lower():
             fun_fact = custom_fact
 
     # Build the result following the required JSON format.
-    
-
     result = OrderedDict([
         ("number", number),
         ("is_prime", prime),
@@ -94,7 +100,7 @@ def classify_number():
         ("properties", properties),
         ("digit_sum", d_sum),
         ("fun_fact", fun_fact)
-        ])
+    ])
     return jsonify(result), 200
 
 if __name__ == '__main__':
